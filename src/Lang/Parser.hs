@@ -1,6 +1,9 @@
 
 module Lang.Parser
   ( runParseProgram
+  , parseExpr
+  , parseStmt
+  , parseLet
   )
 where
 

@@ -8,34 +8,46 @@ Maintainer:          maintainer@example.com
 Stability:           Experimental
 Category:            Web
 Build-type:          Simple
-Cabal-version:       >=1.2
+Cabal-version:       >=1.8
 
 Executable code-report
-  hs-source-dirs: src
+  hs-source-dirs: main/
   
   main-is: Main.hs
 
-  other-modules:
-                Lang.Parser
-              , Analysis.Analysis
-              , Lang.Lang
-
-
-  Build-depends:  base
+  build-depends:  base
                 , bytestring    
                 , mtl
                 , snap    
                 , snap-core  
                 , snap-server
-                , megaparsec
                 , aeson
+                , code-report
+
+library
+  hs-source-dirs: src/
+
+  build-depends:
+                base
+              , bytestring
+              , mtl
+              , megaparsec
+  
+  exposed-modules:
+                  Lang.Parser
+                , Lang.Lang
+                , Analysis.Analysis
 
 test-suite tests
   main-is:            Main.hs
-  hs-source-dirs:     test
+  hs-source-dirs:     tests
   type:               exitcode-stdio-1.0
   build-depends:
                 base
               , hspec
+              , megaparsec
+              , code-report
+  other-modules:
+                Test.Lang.Parser
 
                   
