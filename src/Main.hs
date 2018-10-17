@@ -45,7 +45,7 @@ handleParseRequest = do
   modifyResponse $ setHeader "Content-Type" "application/json"
   case (A.decode body :: Maybe CodeParseRequest) of
     Just codeParseRequest ->
-      let parsed = runParseLang (codeText codeParseRequest)
+      let parsed = runParseProgram (codeText codeParseRequest)
       in do
         writeLBS (A.encode $ CodeParseResp (show parsed))
         modifyResponse $ setResponseCode 200

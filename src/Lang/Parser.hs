@@ -1,6 +1,6 @@
 
 module Lang.Parser
-  ( runParseLang
+  ( runParseProgram
   )
 where
 
@@ -38,25 +38,28 @@ parens = M.between (langSymbol "(") (langSymbol ")")
 
 
 -- runParseLang :: String -> Either (E.ParseError String Void) Lang
-runParseLang input =
-  M.parse (langWhitespace >> parseLang <* M.eof) "" input
+runParseProgram input =
+  M.parse (langWhitespace >> parseProgram <* M.eof) "" input
 
-parseLang :: M.Parsec Void String Lang
-parseLang =
-  parseExpr
+parseProgram :: M.Parsec Void String Program
+parseProgram =
+  Program <$> M.some parseStmt
 
-parseExpr :: M.Parsec Void String Lang
+parseExpr :: M.Parsec Void String Expr
 parseExpr =
   parseVariable
-  <|> M.try parseLambda
-  <|> M.try parseApplication
-  <|> parseLet
+  <|> (Primitive <$> parsePrimitive)
+  <|> parens (parseLambda
+               <|> parseLet
+               <|> parseApplication
+             )
+
   
 parseIdentifier :: M.Parsec Void String String
 parseIdentifier =
   langLexeme (M.some C.letterChar)
 
-parseVariable :: M.Parsec Void String Lang
+parseVariable :: M.Parsec Void String Expr
 parseVariable = Identifier <$> parseIdentifier
 
 parseFormals :: M.Parsec Void String Formals
@@ -64,17 +67,18 @@ parseFormals = do
   formals <- M.some parseIdentifier
   return $ Formals formals
 
-parseLambda :: M.Parsec Void String Lang
-parseLambda = parens $ do
+parseLambda :: M.Parsec Void String Expr
+parseLambda = do
   _ <- langLexeme (C.string "lambda")
   formals <- parens parseFormals
   body <- parseExpr
   return $ Lambda formals body
 
-parseApplication :: M.Parsec Void String Lang
+parseApplication :: M.Parsec Void String Expr
 parseApplication = do
-  func <- parens parseExpr
-  return $ App func
+  func <- parseExpr
+  args <- M.many parseExpr
+  return $ App func args
 
 parseLetPair :: M.Parsec Void String LetPair
 parseLetPair = parens $ do
@@ -82,12 +86,33 @@ parseLetPair = parens $ do
   val <- parseExpr
   return $ LetPair iden val
 
-parseLet :: M.Parsec Void String Lang
-parseLet = parens $ do
+parseLet :: M.Parsec Void String Expr
+parseLet = do
   _ <- langLexeme (C.string "let")
-  pairs <- parens $ some parseLetPair
+  pairs <- parens $ M.some parseLetPair
   body <- parseExpr
   return $ Let pairs body
+
+parseDefinition :: M.Parsec Void String Stmt
+parseDefinition = parens $ do
+  _ <- langLexeme (C.string "define")
+  name <- parseIdentifier
+  body <- parseExpr
+  return $ Definition name body
+
+parseStmt :: M.Parsec Void String Stmt
+parseStmt =
+  parseDefinition
+
+parseInteger :: M.Parsec Void String Primitive
+parseInteger =
+  LangNum <$> langLexeme L.decimal
+
+parsePrimitive :: M.Parsec Void String Primitive
+parsePrimitive =
+  parseInteger
+
+
 
   
   
