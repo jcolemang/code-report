@@ -48,14 +48,17 @@ parseProgram :: M.Parsec Void String Program
 parseProgram =
   Program <$> M.some parseStmt
 
-parseExpr :: M.Parsec Void String Expr
-parseExpr =
-  parseVariable
-  <|> (Primitive <$> parsePrimitive)
-  <|> parens (parseLambda
-               <|> parseLet
-               <|> parseApplication
-             )
+parseExpr :: M.Parsec Void String (Annotated Expr)
+parseExpr = do
+  start <- M.getPosition
+  val <- parseVariable
+         <|> (Primitive <$> parsePrimitive)
+         <|> parens (parseLambda
+                     <|> parseLet
+                     <|> parseApplication
+                    )
+  end <- M.getPosition
+  return $ A val (S start end)
 
   
 parseIdentifier :: M.Parsec Void String String
@@ -63,7 +66,9 @@ parseIdentifier =
   langLexeme (M.some C.letterChar)
 
 parseVariable :: M.Parsec Void String Expr
-parseVariable = Identifier <$> parseIdentifier
+parseVariable = do
+  iden <- parseIdentifier
+  return $ Identifier iden
 
 parseFormals :: M.Parsec Void String Formals
 parseFormals = do
@@ -96,14 +101,18 @@ parseLet = do
   body <- parseExpr
   return $ Let pairs body
 
-parseDefinition :: M.Parsec Void String Stmt
-parseDefinition = parens $ do
-  _ <- langLexeme (C.string "define")
-  name <- parseIdentifier
-  body <- parseExpr
-  return $ Definition name body
+parseDefinition :: M.Parsec Void String (Annotated Stmt)
+parseDefinition = do
+  start <- M.getPosition
+  val <- parens $ do
+    _ <- langLexeme (C.string "define")
+    name <- parseIdentifier
+    body <- parseExpr
+    return $ Definition name body
+  end <- M.getPosition
+  return $ A val (S start end)
 
-parseStmt :: M.Parsec Void String Stmt
+parseStmt :: M.Parsec Void String (Annotated Stmt)
 parseStmt =
   parseDefinition
 
