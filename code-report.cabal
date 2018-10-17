@@ -1,0 +1,41 @@
+Name:                code-report
+Version:             0.1
+Synopsis:            Project Synopsis Here
+Description:         Project Description Here
+License:             AllRightsReserved
+Author:              Author
+Maintainer:          maintainer@example.com
+Stability:           Experimental
+Category:            Web
+Build-type:          Simple
+Cabal-version:       >=1.2
+
+Executable code-report
+  hs-source-dirs: src
+  
+  main-is: Main.hs
+
+  other-modules:
+                Lang.Parser
+              , Analysis.Analysis
+              , Lang.Lang
+
+
+  Build-depends:  base
+                , bytestring    
+                , mtl
+                , snap    
+                , snap-core  
+                , snap-server
+                , megaparsec
+                , aeson
+
+test-suite tests
+  main-is:            Main.hs
+  hs-source-dirs:     test
+  type:               exitcode-stdio-1.0
+  build-depends:
+                base
+              , hspec
+
+                  
